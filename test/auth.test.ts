@@ -23,7 +23,7 @@ const defaultRegisterDto = {
 // Register
 // ---------------------------------------------------------------------------
 
-describe("AuthService – register", () => {
+describe("AuthService - register", () => {
   let authService: AuthService;
   let usersRepository: InMemoryUsersRepository;
 
