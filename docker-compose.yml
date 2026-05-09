@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:16
+    container_name: transactions-api-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: transactions_user
+      POSTGRES_PASSWORD: transactions_password
+      POSTGRES_DB: transactions_api
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

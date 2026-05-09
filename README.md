@@ -18,8 +18,8 @@ The API uses a session-based approach with cookies to isolate user data.
 - Node.js
 - TypeScript
 - Fastify
-- Knex.js
-- SQLite
+- Prisma ORM
+- PostgreSQL
 - Zod
 - Vitest
 - Supertest
@@ -29,7 +29,7 @@ The API uses a session-based approach with cookies to isolate user data.
 The project follows a simple and modular structure:
 
 - Routes layer handles HTTP logic
-- Database layer uses Knex for queries and migrations
+- Database layer uses Prisma for queries and migrations
 - Middleware enforces session validation
 - Environment validation ensures correct configuration using Zod
 - Tests validate all core behaviors
@@ -45,6 +45,7 @@ This avoids implementing full authentication while still simulating user isolati
 ## API Endpoints
 
 ### Create Transaction
+
 `POST /transactions/create`
 
 ```json
@@ -56,12 +57,15 @@ This avoids implementing full authentication while still simulating user isolati
 ```
 
 ### List Transactions
+
 `GET /transactions`
 
 ### Get Transaction by ID
+
 `GET /transactions/:id`
 
 ### Get Summary
+
 `GET /transactions/summary`
 
 Returns the total balance (credits - debits)
@@ -70,7 +74,7 @@ Returns the total balance (credits - debits)
 
 ### Table: transactions
 
-| Column      | Type       |
+| Column     | Type      |
 |------------|-----------|
 | id         | uuid      |
 | title      | text      |
@@ -80,21 +84,18 @@ Returns the total balance (credits - debits)
 
 ## Migrations
 
-Migrations are used to:
-
-- Create the `transactions` table
-- Add the `session_id` column
+Migrations are managed by Prisma.
 
 Run migrations with:
 
 ```bash
-npm run knex migrate:latest
+npx prisma migrate dev
 ```
 
-Rollback:
+Rollback by creating a new migration with the reverted schema:
 
 ```bash
-npm run knex migrate:rollback --all
+npx prisma migrate dev --name revert_change
 ```
 
 ## Running the Project
@@ -111,7 +112,7 @@ Create a `.env` file using the `.env.example` provided:
 
 ```env
 NODE_ENV=development
-DATABASE_URL=your_database_file
+DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 PORT=your_port
 ```
 
@@ -142,7 +143,7 @@ This project was built to practice:
 
 - Building REST APIs with Fastify
 - Structuring a backend project
-- Using query builders (Knex)
+- Using ORMs (Prisma)
 - Managing database migrations
 - Handling sessions with cookies
 - Writing automated tests
@@ -150,6 +151,7 @@ This project was built to practice:
 ## Future Improvements
 
 ### Features
+
 - [ ] Implement update transaction (`PUT /transactions/:id`)
 - [ ] Implement delete transaction (`DELETE /transactions/:id`)
 - [ ] Add filtering (by type, amount range, date)
@@ -159,16 +161,19 @@ This project was built to practice:
 - [ ] Add monthly financial summary
 
 ### Architecture
-- [ ] Refactor to layered architecture (controllers, services, repositories)
+
+- [x] Refactor to layered architecture (controllers, services, repositories)
 - [ ] Improve validation and error handling
 
 ### Security
-- [ ] Add authentication (JWT or OAuth)
+
+- [x] Add authentication (JWT or OAuth)
 - [ ] Implement rate limiting
 
 ### Infrastructure
-- [ ] Add Docker support
-- [ ] Replace SQLite with PostgreSQL
+
+- [x] Add Docker support
 
 ### Frontend
+
 - [ ] Build a frontend client to consume the API
