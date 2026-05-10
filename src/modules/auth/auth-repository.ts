@@ -15,6 +15,9 @@ export class AuthRepository implements UsersRepository {
   async findUserById(id: string): Promise<User | null> {
     return prisma.user.findUnique({ where: { id } });
   }
+  async updateRefreshToken(id: string, token: string | null): Promise<void> {
+    await prisma.user.update({ where: { id }, data: { refreshToken: token } });
+  }
  
 
 }

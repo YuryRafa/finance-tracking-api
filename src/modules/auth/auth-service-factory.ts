@@ -1,10 +1,8 @@
+import type { FastifyInstance } from "fastify";
 import { AuthRepository } from "./auth-repository.js";
 import { AuthService } from "./auth-service.js";
 
-export function makeAuthService() {
-    const authRepository = new AuthRepository();
-    const authService = new AuthService(authRepository);
-
-    return authService
-
+export function makeAuthService(app: FastifyInstance) {
+  const authRepository = new AuthRepository();
+  return new AuthService(authRepository, app);
 }

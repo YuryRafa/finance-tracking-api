@@ -26,4 +26,9 @@ export class InMemoryUsersRepository implements UsersRepository {
   async findUserById(id: string): Promise<User | null> {
     return this.users.find((user) => user.id === id) ?? null;
   }
+
+  async updateRefreshToken(id: string, token: string | null): Promise<void> {
+    const user = this.users.find((u) => u.id === id);
+    if (user) user.refreshToken = token;
+  }
 }

@@ -4,8 +4,7 @@ export interface UsersRepository {
   createUser(data: Prisma.UserCreateInput): Promise<User>;
   findUserByEmail(email: string): Promise<User | null>;
   findUserById(id: string): Promise<User | null>;
-  //saveRefreshToken(userId: string, token: string): Promise<void>;
-  //clearRefreshToken(userId: string): Promise<void>;
+  updateRefreshToken(id: string, token: string | null): Promise<void>;
 }
 
 export interface RegisterDto {
