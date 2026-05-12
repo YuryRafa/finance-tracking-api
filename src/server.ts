@@ -6,5 +6,5 @@ import { app } from "./app.js"
 app.listen({
     port: env.PORT,
 }).then(() => {
-    console.log("Server Running on http://localhost:3336")
+    console.log("HTTP Server Running")
 })

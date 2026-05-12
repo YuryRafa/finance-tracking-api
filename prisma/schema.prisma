@@ -42,6 +42,6 @@ model Transaction {
 }
 
 enum TransactionType {
-  credit
-  debit
+  INCOME
+  EXPENSE
 }

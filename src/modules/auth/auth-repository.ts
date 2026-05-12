@@ -1,10 +1,10 @@
-import type { UsersRepository } from "../../@types/auth-interfaces.js";
+import type { CreateUserDto, AuthRepositoryInterface } from "../../@types/auth-interfaces.js";
 import { prisma } from "../../config/prisma.js";
-import type { Prisma, User } from "../../generated/prisma/client.js";
+import type { User } from "../../generated/prisma/client.js";
 
 
-export class AuthRepository implements UsersRepository {
-  async createUser(data: Prisma.UserCreateInput): Promise<User> {
+export class AuthRepository implements AuthRepositoryInterface {
+  async createUser(data: CreateUserDto): Promise<User> {
     return prisma.user.create({ data });
   }
  

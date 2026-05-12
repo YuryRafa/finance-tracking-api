@@ -1,17 +1,16 @@
 # Transaction Tracker API
 
-A simple REST API for managing financial transactions, built as a study project to practice backend fundamentals such as routing, data persistence, session handling, and testing.
+A REST API for managing personal financial transactions, being built as a study project to practice backend fundamentals such as routing, authentication, data persistence, and testing.
 
 ## Overview
 
-This project implements a basic financial ledger where users can:
+Users can register, authenticate, and manage their financial transactions:
 
-- Create transactions (credit or debit)
-- List all transactions linked to a session
+- Register and login with JWT authentication
+- Create transactions (income or expense)
+- List all transactions linked to their account
 - Retrieve a specific transaction
-- Get a summary (balance)
-
-The API uses a session-based approach with cookies to isolate user data.
+- Delete a transaction
 
 ## Tech Stack
 
@@ -22,86 +21,155 @@ The API uses a session-based approach with cookies to isolate user data.
 - PostgreSQL
 - Zod
 - Vitest
-- Supertest
+- @fastify/jwt
+- bcrypt
 
-## Architecture Notes
+## Architecture
 
-The project follows a simple and modular structure:
+The project follows a layered, modular structure:
 
-- Routes layer handles HTTP logic
-- Database layer uses Prisma for queries and migrations
-- Middleware enforces session validation
-- Environment validation ensures correct configuration using Zod
-- Tests validate all core behaviors
+```
+src/
+├── modules/
+│   ├── auth/
+│   │   ├── auth-controller.ts
+│   │   ├── auth-service.ts
+│   │   ├── auth-repository.ts
+│   │   ├── auth-service-factory.ts
+│   │   ├── auth-schemas.ts
+│   │   ├── auth-routes.ts
+│   │   └── in-memory-auth-repository.ts
+│   └── transactions/
+│       ├── transactions-controller.ts
+│       ├── transactions-service.ts
+│       ├── transactions-repository.ts
+│       ├── transactions-service-factory.ts
+│       ├── transactions-schemas.ts
+│       ├── transactions-routes.ts
+│       └── in-memory-transactions-repository.ts
+├── middlewares/
+│   └── verify-middleware.ts
+├── config/
+│   ├── prisma.ts
+│   └── jwt.ts
+├── utils/
+│   ├── auth-helper.ts
+│   └── app-error.ts
+└── @types/
+    ├── auth-interfaces.ts
+    ├── transactions-interfaces.ts
+    └── fastify-jwt.d.ts
+```
 
-## Session Handling
+Each module is self-contained with its own controller, service, repository, routes, and schemas. In-memory repository implementations are used for unit testing without hitting the database.
 
-- A `sessionId` is generated and stored in cookies on the first transaction creation
-- All subsequent requests must include this cookie
-- Transactions are scoped by `session_id`
+## Authentication
 
-This avoids implementing full authentication while still simulating user isolation.
+- JWT-based authentication with access and refresh tokens
+- Access tokens expire in 20 minutes
+- Refresh tokens expire in 7 days and are hashed before storage
+- Passwords are hashed with bcrypt before storage
+- All transaction routes are protected and require a valid Bearer token
 
 ## API Endpoints
 
-### Create Transaction
+### Auth
 
-`POST /transactions/create`
-
+#### Register
+`POST /auth/register`
 ```json
 {
-  "title": "Salary",
-  "amount": 5000,
-  "type": "credit"
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "secret123"
 }
 ```
 
-### List Transactions
+#### Login
+`POST /auth/login`
+```json
+{
+  "email": "john@example.com",
+  "password": "secret123"
+}
+```
 
-`GET /transactions`
+#### Refresh Token
+`POST /auth/refresh`
+```json
+{
+  "refreshToken": "your-refresh-token"
+}
+```
 
-### Get Transaction by ID
+#### Logout
+`POST /auth/logout`
 
+Requires `Authorization: Bearer <token>` header.
+
+---
+
+### Transactions
+
+All transaction endpoints require `Authorization: Bearer <token>` header.
+
+#### Create Transaction
+`POST /transactions/create`
+```json
+{
+  "title": "Freelance payment",
+  "amount": 1500.00,
+  "type": "INCOME"
+}
+```
+
+#### List Transactions
+`GET /transactions/list`
+
+#### Get Transaction by ID
 `GET /transactions/:id`
 
-### Get Summary
-
-`GET /transactions/summary`
-
-Returns the total balance (credits - debits)
+#### Delete Transaction
+`DELETE /transactions/remove/:id`
 
 ## Database
 
+### Table: users
+
+| Column        | Type           | Notes          |
+|---------------|----------------|----------------|
+| id            | uuid           | PK             |
+| name          | text           |                |
+| email         | text           | unique         |
+| password_hash | text           |                |
+| refresh_token | text           | nullable       |
+| created_at    | timestamp      |                |
+| updated_at    | timestamp      |                |
+
 ### Table: transactions
 
-| Column     | Type      |
-|------------|-----------|
-| id         | uuid      |
-| title      | text      |
-| amount     | decimal   |
-| created_at | timestamp |
-| session_id | uuid      |
+| Column     | Type           | Notes                     |
+|------------|----------------|---------------------------|
+| id         | uuid           | PK                        |
+| title      | text           |                           |
+| amount     | decimal(10, 2) |                           |
+| type       | enum           | `INCOME` or `EXPENSE`     |
+| user_id    | uuid           | FK → users, cascade delete|
+| created_at | timestamp      |                           |
+| updated_at | timestamp      |                           |
 
 ## Migrations
 
 Migrations are managed by Prisma.
 
-Run migrations with:
-
+Run migrations:
 ```bash
 npx prisma migrate dev
-```
-
-Rollback by creating a new migration with the reverted schema:
-
-```bash
-npx prisma migrate dev --name revert_change
 ```
 
 ## Running the Project
 
 ### Install dependencies
-
 ```bash
 npm install
 ```
@@ -109,51 +177,48 @@ npm install
 ### Configure environment variables
 
 Create a `.env` file using the `.env.example` provided:
-
 ```env
 NODE_ENV=development
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 PORT=your_port
+JWT_SECRET=your_secret
 ```
 
 ### Run the server
-
 ```bash
 npm run dev
 ```
 
 ## Testing
 
-This project includes end-to-end tests covering all main flows:
+Unit tests cover all core service behaviors using in-memory repositories, so no database connection is needed to run them.
 
-- Transaction creation
-- Listing transactions
-- Fetching by ID
-- Summary calculation
+Covers:
+- User registration, login, refresh, and logout
+- Transaction creation, listing, fetching by ID, and deletion
+- Ownership isolation (users cannot access each other's transactions)
+- Error handling (404, 401, 409)
 
-Run tests with:
-
+Run tests:
 ```bash
 npm run test
 ```
 
 ## What This Project Focuses On
 
-This project was built to practice:
-
 - Building REST APIs with Fastify
-- Structuring a backend project
-- Using ORMs (Prisma)
-- Managing database migrations
-- Handling sessions with cookies
-- Writing automated tests
+- Layered architecture (controllers, services, repositories)
+- Dependency injection
+- JWT authentication with refresh token rotation
+- Password hashing and secure credential handling
+- Using Prisma ORM and managing migrations
+- Writing unit tests with in-memory repositories
 
 ## Future Improvements
 
 ### Features
-
 - [ ] Implement update transaction (`PUT /transactions/:id`)
-- [ ] Implement delete transaction (`DELETE /transactions/:id`)
+- [ ] Implement transactions summary (`GET /transactions/summary`)
 - [ ] Add filtering (by type, amount range, date)
 - [ ] Add pagination to transaction listing
 - [ ] Add categories for transactions
@@ -161,19 +226,14 @@ This project was built to practice:
 - [ ] Add monthly financial summary
 
 ### Architecture
-
-- [x] Refactor to layered architecture (controllers, services, repositories)
 - [ ] Improve validation and error handling
+- [ ] Add end-to-end tests with Supertest
 
 ### Security
-
-- [x] Add authentication (JWT or OAuth)
 - [ ] Implement rate limiting
 
 ### Infrastructure
-
 - [x] Add Docker support
 
 ### Frontend
-
 - [ ] Build a frontend client to consume the API

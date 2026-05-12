@@ -1,11 +1,18 @@
-import type { Prisma, User } from '../generated/prisma/client.js';
+import type { User } from '../generated/prisma/client.js';
 
-export interface UsersRepository {
-  createUser(data: Prisma.UserCreateInput): Promise<User>;
+export interface CreateUserDto {
+  name: string;
+  email: string;
+  passwordHash: string; 
+}
+
+export interface AuthRepositoryInterface {
+  createUser(data: CreateUserDto): Promise<User>;
   findUserByEmail(email: string): Promise<User | null>;
   findUserById(id: string): Promise<User | null>;
   updateRefreshToken(id: string, token: string | null): Promise<void>;
 }
+
 
 export interface RegisterDto {
   name: string;
@@ -17,13 +24,20 @@ export interface LoginDto {
   email: string;
   password: string;
 }
+
+
+
 export interface JwtPayload {
   sub: string;
   email: string;
-  name: string;
 }
 
 export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
+}
+
+
+export interface TokenGenerator {
+  generateTokens(payload: Omit<JwtPayload, 'name'>): AuthTokens;
 }

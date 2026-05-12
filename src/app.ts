@@ -1,17 +1,40 @@
 import fastify from 'fastify';
-import fastifyJwt from '@fastify/jwt';
-import { env } from '@/env/index.js';
-import { authRoutes } from '@/routes/auth-routes.js';
+import fastifySwagger from '@fastify/swagger';
+import fastifySwaggerUi from '@fastify/swagger-ui';
+import  jwtPlugin from '@/config/jwt.js';
+import  {authRoutes}  from '@/routes/auth-routes.js';
+import {transactionsRoutes} from '@/routes/transactions-routes.js';
 
 export const app = fastify();
 
-app.register(fastifyJwt, {
-  secret: env.JWT_SECRET,
-  sign: { expiresIn: '15m' },
+await app.register(fastifySwagger, {
+  openapi: {
+    info: {
+      title: 'Transactions Tracker API',
+      description: 'API documentation',
+      version: '1.0.0',
+    },
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+        },
+      },
+    },
+  },
 });
 
-app.addHook('preHandler', async (request, reply) => {
+await app.register(fastifySwaggerUi, {
+  routePrefix: '/docs',
+});
+
+await app.register(jwtPlugin);
+
+app.addHook('preHandler', async (request) => {
   console.log(`[${request.method}] ${request.url}`);
 });
 
-app.register(authRoutes, { prefix: '/auth' });
+await app.register(authRoutes, { prefix: '/auth' });
+await app.register(transactionsRoutes, { prefix: '/transactions' });

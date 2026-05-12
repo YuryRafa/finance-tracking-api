@@ -1,7 +1,7 @@
-import type { UsersRepository } from "../../@types/auth-interfaces.js";
+import type { AuthRepositoryInterface } from "../../@types/auth-interfaces.js";
 import type { Prisma, User } from "../../generated/prisma/client.js";
 
-export class InMemoryUsersRepository implements UsersRepository {
+export class InMemoryAuthRepository implements AuthRepositoryInterface {
   public users: User[] = [];
 
   async createUser(data: Prisma.UserCreateInput): Promise<User> {
