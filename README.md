@@ -217,8 +217,8 @@ npm run test
 ## Future Improvements
 
 ### Features
-- [ ] Implement update transaction (`PUT /transactions/:id`)
-- [ ] Implement transactions summary (`GET /transactions/summary`)
+- [x] Implement update transaction (`PUT /transactions/:id`)
+- [x] Implement transactions summary (`GET /transactions/summary`)
 - [ ] Add filtering (by type, amount range, date)
 - [ ] Add pagination to transaction listing
 - [ ] Add categories for transactions

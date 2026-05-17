@@ -1,6 +1,6 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import { makeTransactionsService } from "./transactions-service-factory.js";
-import { createTransactionSchema } from "./transactions-schemas.js";
+import { createTransactionSchema, updateTransactionSchema } from "./transactions-schemas.js";
 import { AppError } from "@/utils/app-error.js";
 
 const transactionsService = makeTransactionsService();
@@ -57,4 +57,33 @@ export class TransactionsController {
             throw error;
         }
     }
+
+    async updateTransaction(request: FastifyRequest, reply: FastifyReply) {
+        try {
+            const { id } = request.params as { id: string };
+            const data = updateTransactionSchema.parse(request.body);
+            const userId = request.user.sub;
+            const transaction = await transactionsService.updateTransaction(id, userId, data);
+            return reply.status(200).send(transaction);
+        } catch (error) {
+            if (error instanceof AppError)
+            return reply.status(error.statusCode).send({ message: error.message });
+            throw error;
+        }
+    }
+
+    async getSummary(request: FastifyRequest, reply: FastifyReply){
+        try {
+            const userId = request.user.sub;
+            const summary = await transactionsService.getSummary(userId)
+            return reply.status(200).send(summary)
+
+        } catch (error) {
+            if (error instanceof AppError) return reply.status(error.statusCode).send({ message: error.message });
+            throw error;            
+            
+        }
+    }
+
+
 }

@@ -185,3 +185,142 @@ describe("TransactionsService - removeTransaction", () => {
         ).rejects.toThrow(new AppError("Transaction not found", 404));
     });
 });
+
+
+// getSummary
+
+describe("TransactionsService - getSummary", () => {
+    let transactionsService: TransactionsService;
+
+    beforeEach(() => {
+        ({ transactionsService } = makeTransactionsService());
+    });
+
+    it("should return zero summary when user has no transactions", async () => {
+        const summary = await transactionsService.getSummary(userId);
+
+        expect(summary.income).toBe(0);
+        expect(summary.expense).toBe(0);
+        expect(summary.balance).toBe(0);
+    });
+
+    it("should return correct income total", async () => {
+        await transactionsService.registerTransaction(defaultTransactionDto); // 1500
+        await transactionsService.registerTransaction({ ...defaultTransactionDto, amount: 500 });
+
+        const summary = await transactionsService.getSummary(userId);
+
+        expect(summary.income).toBe(2000);
+        expect(summary.expense).toBe(0);
+        expect(summary.balance).toBe(2000);
+    });
+
+    it("should return correct expense total", async () => {
+        await transactionsService.registerTransaction({ ...defaultTransactionDto, type: TransactionType.EXPENSE, amount: 300 });
+        await transactionsService.registerTransaction({ ...defaultTransactionDto, type: TransactionType.EXPENSE, amount: 200 });
+
+        const summary = await transactionsService.getSummary(userId);
+
+        expect(summary.income).toBe(0);
+        expect(summary.expense).toBe(500);
+        expect(summary.balance).toBe(-500);
+    });
+
+    it("should return correct balance with both income and expenses", async () => {
+        await transactionsService.registerTransaction(defaultTransactionDto); // income 1500
+        await transactionsService.registerTransaction({ ...defaultTransactionDto, type: TransactionType.EXPENSE, amount: 400 });
+
+        const summary = await transactionsService.getSummary(userId);
+
+        expect(summary.income).toBe(1500);
+        expect(summary.expense).toBe(400);
+        expect(summary.balance).toBe(1100);
+    });
+
+    it("should not include transactions from other users", async () => {
+        await transactionsService.registerTransaction(defaultTransactionDto); // userId income 1500
+        await transactionsService.registerTransaction({ ...defaultTransactionDto, userId: anotherUserId, amount: 9999 });
+
+        const summary = await transactionsService.getSummary(userId);
+
+        expect(summary.income).toBe(1500);
+        expect(summary.balance).toBe(1500);
+    });
+});
+
+
+// updateTransaction
+
+
+describe("TransactionsService - updateTransaction", () => {
+    let transactionsService: TransactionsService;
+    let transactionsRepository: InMemoryTransactionsRepository;
+
+    beforeEach(() => {
+        ({ transactionsService, transactionsRepository } = makeTransactionsService());
+    });
+
+    it("should update the title of a transaction", async () => {
+        const created = await transactionsService.registerTransaction(defaultTransactionDto);
+
+        const updated = await transactionsService.updateTransaction(created.id, userId, { title: "Updated title" });
+
+        expect(updated.title).toBe("Updated title");
+        expect(updated.amount.toNumber()).toBe(defaultTransactionDto.amount); // unchanged
+    });
+
+    it("should update the amount of a transaction", async () => {
+        const created = await transactionsService.registerTransaction(defaultTransactionDto);
+
+        const updated = await transactionsService.updateTransaction(created.id, userId, { amount: 9999 });
+
+        expect(updated.amount.toNumber()).toBe(9999);
+        expect(updated.title).toBe(defaultTransactionDto.title); // unchanged
+    });
+
+    it("should update the type of a transaction", async () => {
+        const created = await transactionsService.registerTransaction(defaultTransactionDto);
+
+        const updated = await transactionsService.updateTransaction(created.id, userId, { type: TransactionType.EXPENSE });
+
+        expect(updated.type).toBe(TransactionType.EXPENSE);
+    });
+
+    it("should update multiple fields at once", async () => {
+        const created = await transactionsService.registerTransaction(defaultTransactionDto);
+
+        const updated = await transactionsService.updateTransaction(created.id, userId, {
+            title: "New title",
+            amount: 250,
+            type: TransactionType.EXPENSE,
+        });
+
+        expect(updated.title).toBe("New title");
+        expect(updated.amount.toNumber()).toBe(250);
+        expect(updated.type).toBe(TransactionType.EXPENSE);
+    });
+
+    it("should update updatedAt timestamp", async () => {
+        const created = await transactionsService.registerTransaction(defaultTransactionDto);
+        const originalUpdatedAt = created.updatedAt;
+
+        await new Promise((r) => setTimeout(r, 10)); // ensure time passes
+        const updated = await transactionsService.updateTransaction(created.id, userId, { title: "New title" });
+
+        expect(updated.updatedAt.getTime()).toBeGreaterThan(originalUpdatedAt.getTime());
+    });
+
+    it("should throw AppError 404 when transaction does not exist", async () => {
+        await expect(
+            transactionsService.updateTransaction("non-existent-id", userId, { title: "New title" })
+        ).rejects.toThrow(new AppError("Transaction not found", 404));
+    });
+
+    it("should throw AppError 404 when transaction belongs to another user", async () => {
+        const created = await transactionsService.registerTransaction(defaultTransactionDto);
+
+        await expect(
+            transactionsService.updateTransaction(created.id, anotherUserId, { title: "New title" })
+        ).rejects.toThrow(new AppError("Transaction not found", 404));
+    });
+});
