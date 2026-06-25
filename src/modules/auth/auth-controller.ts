@@ -29,8 +29,13 @@ export class AuthController {
   async refresh(request: FastifyRequest, reply: FastifyReply) {
     const { refreshToken } = refreshSchema.parse(request.body);
     try {
-      const payload = request.server.jwt.decode<{ sub: string }>(refreshToken);
-      if (!payload?.sub) return reply.status(401).send({ message: "Unauthorized" });
+      let payload: { sub: string; email: string };
+      try {
+        payload = request.server.jwt.verify<{ sub: string; email: string }>(refreshToken);
+      } catch {
+        return reply.status(401).send({ message: "Unauthorized" });
+      }
+
       const tokens = await makeAuthService(request.server).refresh(payload.sub, refreshToken);
       return reply.status(200).send(tokens);
     } catch (error) {

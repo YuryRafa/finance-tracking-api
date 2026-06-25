@@ -10,7 +10,7 @@
     "db:generate": "prisma generate",
     "db:studio": "prisma studio",
     "test": "vitest",
-    "build": "tsup src --out-dir build"
+    "build": "tsup src --out-dir build "
   },
   "keywords": [],
   "author": "",

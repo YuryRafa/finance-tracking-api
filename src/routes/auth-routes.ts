@@ -9,6 +9,9 @@ export async function authRoutes(app: FastifyInstance) {
   app.post("/register", { schema: registerOpenApi }, authController.register.bind(authController));
   app.post("/login", { schema: loginOpenApi }, authController.login.bind(authController));
   app.post("/refresh", { schema: refreshOpenApi }, authController.refresh.bind(authController));
-  app.post("/logout", { schema: logoutOpenApi, preHandler: [verifyJwt] }, authController.logout.bind(authController));
+  app.post(
+    "/logout",
+    { schema: logoutOpenApi, preHandler: [verifyJwt] },
+    authController.logout.bind(authController)
+  );
 }
-

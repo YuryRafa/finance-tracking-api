@@ -1,7 +1,6 @@
 import type { CreateTransactionDto, SummaryResult, TransactionsRepositoryInterface, UpdateTransactionDto } from "@/@types/transactions-interfaces.js";
 import type { Transaction } from "@/generated/prisma/client.js";
 import { AppError } from "@/utils/app-error.js";
-import { Decimal } from "@prisma/client/runtime/client";
 
 export class TransactionsService {
     constructor(

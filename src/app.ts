@@ -1,9 +1,9 @@
 import fastify from 'fastify';
 import fastifySwagger from '@fastify/swagger';
 import fastifySwaggerUi from '@fastify/swagger-ui';
-import  jwtPlugin from '@/config/jwt.js';
-import  {authRoutes}  from '@/routes/auth-routes.js';
-import {transactionsRoutes} from '@/routes/transactions-routes.js';
+import jwtPlugin from '@/config/jwt.js';
+import { authRoutes } from '@/routes/auth-routes.js';
+import { transactionsRoutes } from '@/routes/transactions-routes.js';
 
 export const app = fastify();
 
@@ -34,6 +34,10 @@ await app.register(jwtPlugin);
 
 app.addHook('preHandler', async (request) => {
   console.log(`[${request.method}] ${request.url}`);
+});
+
+app.get('/', async () => {
+  return { status: 'ok', uptime: process.uptime() };
 });
 
 await app.register(authRoutes, { prefix: '/auth' });

@@ -11,6 +11,7 @@ export interface AuthRepositoryInterface {
   findUserByEmail(email: string): Promise<User | null>;
   findUserById(id: string): Promise<User | null>;
   updateRefreshToken(id: string, token: string | null): Promise<void>;
+  
 }
 
 
